@@ -10,7 +10,7 @@ late_stack <- raster::stack(late_files)
 final_files <- list.files('data/final_run',pattern='*.nc',full.names=TRUE)
 final_stack <- raster::stack(final_files)
 
-nc <- nc_open(early_files[0])
+e_nc <- nc_open(early_files[1])
 lat <- ncvar_get(e_nc,'lat')
 lon <- ncvar_get(e_nc,'lon')
 
