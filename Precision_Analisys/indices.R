@@ -11,12 +11,8 @@ late_stack <- raster::stack(late_files)
 final_files <- list.files('data/final_run',pattern='*.nc',full.names=TRUE)
 final_stack <- raster::stack(final_files)
 
-# Geting dimensions from any file
-e_nc <- nc_open(late_files[1])
-lat <- ncvar_get(e_nc,'lat')
-lon <- ncvar_get(e_nc,'lon')
-
 # Setting the base date from the files
+e_nc <- nc_open(late_files[1])
 days <- ncvar_get(e_nc, 'time')
 base_date <- unlist(ncatt_get(e_nc,'time')[1])
 base_date <- strapplyc(base_date, "\\d+-\\d+-\\d+", simplify = TRUE)
@@ -106,23 +102,39 @@ for (i in 1:length(indices)) {
   }
 }
 
-#### GETING INDEXES FOR DECENDS ####
+# Getting months mask
+months = groups
+for (i in 1:length(groups)) {
+  months[i] =floor((as.numeric(months[i])%%100-1)/3)
+}
+months = as.numeric(months)
+
+#### GETING INDEXES FOR DECENDS ####                                                                                                                 
 # Get decend precitation sums
 real_sum <- stackApply(final_stack, indices, sum)
 prev_sum <- stackApply(late_stack, indices, sum)
 
 # Get decend RMSE
 N = length(late_stack[[1]])
-rmse = c()
+decend_rmse = c()
 for (i in 1:dim(real_sum)[3]) {
-  rmse = c(rmse, sqrt(sum(as.matrix((prev_sum[[i]]-real_sum[[i]])**2))/N))
+  decend_rmse = c(rmse, sqrt(sum(as.matrix((prev_sum[[i]]-real_sum[[i]])**2))/N))
 }
 
-#### TESTING AREA #####
+# Get months precitation sums
+real_sum <- stackApply(final_stack, months, sum)
+prev_sum <- stackApply(late_stack, months, sum)
 
-# Calculating RMSE
+# Get months rmse
+N = length(late_stack[[1]])
+months_rmse = c()
+for (i in 1:dim(real_sum)[3]) {
+  months_rmse = c(months_rmse, sqrt(sum(as.matrix((prev_sum[[i]]-real_sum[[i]])**2))/N))
+}
 
-
+# Plot RMSE
+plot(unique(groups), decend_rmse)
+plot(unique(months), months_rmse)
 
 # Calculating R²
 
