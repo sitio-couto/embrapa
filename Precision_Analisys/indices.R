@@ -33,37 +33,51 @@ end <- as.numeric(final_date - base_date) + 1
 final_stack = final_stack[[start:end]]
 late_stack = late_stack[[start:end]]
 
-# Grouping periods
-groups <- as.character(seq(first_date, final_date, by="days"))
-
-# Get starting value for decends (-1 to compensate flag set)
-flag <- 0
-new_flag <- 0
-day = as.numeric(format(first_date, '%d'))
-decend <- (as.numeric(format(first_date, '%m'))-1)*3
-if (10 < day && day <= 20) decend = decend + 1
-if (day > 20) decend = decend + 2 
-
-# Group decends
-for (i in 1:length(groups)) {
-  date <- as.Date(groups[i])
-  day = as.numeric(format(date, '%d'))
-  if (day <= 10) { new_flag = 1 }
-  else if (day <= 20) { new_flag = 2 }
-  else { new_flag = 3 }
+decends <- function (first_date, final_date) {
+  # Grouping periods
+  groups <- as.character(seq(first_date, final_date, by="days"))
   
-  if (flag != new_flag){
-    flag = new_flag
-    decend = decend + 1
-    if (decend==37) { decend = 1 }
+  # Get starting value for decends (-1 to compensate flag set)
+  flag <- 0
+  new_flag <- 0
+  day = as.numeric(format(first_date, '%d'))
+  decend <- (as.numeric(format(first_date, '%m'))-1)*3
+  if (10 < day && day <= 20) decend = decend + 1
+  if (day > 20) decend = decend + 2 
+  
+  # Group decends
+  for (i in 1:length(groups)) {
+    date <- as.Date(groups[i])
+    day = as.numeric(format(date, '%d'))
+    if (day <= 10) { new_flag = 1 }
+    else if (day <= 20) { new_flag = 2 }
+    else { new_flag = 3 }
+    
+    if (flag != new_flag){
+      flag = new_flag
+      decend = decend + 1
+      if (decend==37) { decend = 1 }
+    }
+    
+    legend[i] = paste(format(date, '%Y'), decend)
   }
   
-  #groups[i] = paste(format(date, '%Y'), decend)
-  groups[i] = as.numeric(format(date, '%Y'))*100+ as.numeric(decend)
+  # Casting groups to sequence
+  indices = c()
+  old = legend[1]
+  count = 1
+  for (i in 1:length(legend)) {
+    if (old == legend[i]) {
+      indices[i] = count
+    } else {
+      count = count +  1
+      old = legend[i]
+      indices[i] = count
+    }
+  }
+  
+  return(c(legend, indices))
 }
-
-
-
 
 
 #### HANDLING DATE DIFFERENCES ####
@@ -86,20 +100,6 @@ for (i in 1:len) {
     } 
     groups = groups[-i]
   } 
-}
-
-# Casting groups to sequence
-indices = as.numeric(groups)
-old = indices[1]
-count = 1
-for (i in 1:length(indices)) {
-  if (old == indices[i]) {
-    indices[i] = count
-  } else {
-    count = count +  1
-    old = indices[i]
-    indices[i] = count
-  }
 }
 
 # Getting months mask
