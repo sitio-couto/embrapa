@@ -82,6 +82,8 @@ read_data <- function(first_date, last_date) {
 
 
 
+
+
 #### FUNCTION TO GET DECENDS ####
 # Given a starting and ending date, this function
 # returns a Nx2 matrix where the first colunm is
@@ -138,6 +140,9 @@ get_decends <- function (dates) {
 
 
 #### FUNCTION TO GET MONTHS ####
+# Given a sequence of dates, returns the sequence
+# grouped by months and a mask for using with stack
+# apply and grouping layers from the same month.
 get_months = function(dates) {
   # Getting months mask
   old <- 0
@@ -162,16 +167,19 @@ get_months = function(dates) {
 
 
 
+
+
 #### EXECUTING SCRIPT (STARTING POINT) ####
 # get range of dates
 first_date <- as.Date("2015-06-01")
 final_date <- as.Date("2016-06-01")
 #======================================#
 
-
 stacks = read_data(first_date, final_date)
 decend = get_decends(getZ(stacks$late))
 months = get_months(getZ(stacks$late))
+
+
 
 
 
@@ -204,7 +212,15 @@ for (i in 1:dim(real_sum)[3]) {
 frame = data.frame(months$legend, months_rmse)
 ggplot(frame, aes(x = months.legend, y = months_rmse)) + geom_point(size=2, shape=23)
 
-# Calculating R²
 
 
-# Calculating pearsons coeficient
+
+
+
+
+#### RMSE PER CELL FOR EACH DECEND ####
+l = dim(stacks$late)[3]
+fun = function(x) { x[(1:l)] - x[(l+1:2*l)] }
+diff = calc(stack(stacks$late, stacks$final), fun)
+
+
