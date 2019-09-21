@@ -140,16 +140,21 @@ get_decends <- function (dates) {
 #### FUNCTION TO GET MONTHS ####
 get_months = function(dates) {
   # Getting months mask
+  old <- 0
+  count = 0
   indexes = c()
   legends = c()
   
   for (i in 1:length(dates)) {
     legends[i] = format(dates[i], '%Y-%m')
-    year = as.numeric(format(dates[i], '%Y'))
-    month = as.numeric(format(dates[i], '%m'))
-    indexes[i] = year*100 + month
+    if (old == legends[i]) {
+      indexes[i] = count 
+    } else {
+      old = legends[i]
+      count = count + 1
+      indexes[i] = count 
+    }
   }
-  indexes = as.numeric(indexes) # Make integers
   legends = unique(legends)
   
   return(list("legend"=legends, "mask"=indexes))
@@ -166,37 +171,38 @@ final_date <- as.Date("2016-06-01")
 
 stacks = read_data(first_date, final_date)
 decend = get_decends(getZ(stacks$late))
-months = get_months(stacks)
+months = get_months(getZ(stacks$late))
 
 
-#### GETING INDEXES FOR DECENDS ####                                                                                                                 
+
+#### RMSE PER DECEND ####
 # Get decend precitation sums
 real_sum <- stackApply(stacks$final, decend$mask, sum)
 prev_sum <- stackApply(stacks$late, decend$mask, sum)
-
-# Get decend RMSE
+# Calculate rmse
 N = length(stacks$late[[1]])
 decend_rmse = c()
 for (i in 1:dim(real_sum)[3]) {
   decend_rmse = c(decend_rmse, sqrt(sum(as.matrix((prev_sum[[i]]-real_sum[[i]])**2))/N))
 }
-
 # Plot RMSE
 frame = data.frame(decend$legend, decend_rmse)
 ggplot(frame, aes(x = decend.legend, y = decend_rmse)) + geom_point(size=2, shape=23)
 
+#### RMSE PER MONTH ####
 # Get months precitation sums
-real_sum <- stackApply(final_stack, months, sum)
-prev_sum <- stackApply(late_stack, months, sum)
+real_sum <- stackApply(stacks$final, months$mask, sum)
+prev_sum <- stackApply(stacks$late, months$mask, sum)
 
 # Get months rmse
-N = length(late_stack[[1]])
+N = length(stacks$late[[1]])
 months_rmse = c()
 for (i in 1:dim(real_sum)[3]) {
   months_rmse = c(months_rmse, sqrt(sum(as.matrix((prev_sum[[i]]-real_sum[[i]])**2))/N))
 }
 
-plot(unique(months), months_rmse)
+frame = data.frame(months$legend, months_rmse)
+ggplot(frame, aes(x = months.legend, y = months_rmse)) + geom_point(size=2, shape=23)
 
 # Calculating R²
 
