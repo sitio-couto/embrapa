@@ -222,5 +222,8 @@ ggplot(frame, aes(x = months.legend, y = months_rmse)) + geom_point(size=2, shap
 l = dim(stacks$late)[3]
 fun = function(x) { x[(1:l)] - x[(l+1:2*l)] }
 diff = calc(stack(stacks$late, stacks$final), fun)
+diff = stackApply(diff, decend$mask, sum)
+N = length(stacks$late)
+diff = sqrt((diff**2)/N)
 
 
