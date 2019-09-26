@@ -14,64 +14,73 @@ p_load(raster, ncdf4, rgdal, stringr, gsubfn, lubridate, ggplot2)
 # and each day with a its date binded to the layer
 # by setZ
 read_data <- function(first_date, last_date) {
-  # Daily product files
-  late_files <- list.files('data/late_run',pattern='*.nc',full.names=TRUE)
-  # Final product files
-  final_files <- list.files('data/final_run',pattern='*.nc',full.names=TRUE)
+  # Getting product files
+  late_files <- sort(list.files('data/late_run',pattern='*.nc',full.names=TRUE))
+  final_files <- sort(list.files('data/final_run',pattern='*.nc',full.names=TRUE))
   
   # Setting the base date from the files
   e_nc <- nc_open(late_files[1])
   days <- ncvar_get(e_nc, 'time')
   base_date <- unlist(ncatt_get(e_nc,'time')[1])
   base_date <- strapplyc(base_date, "\\d+-\\d+-\\d+", simplify = TRUE)
-  base_date <- as.Date(base_date) + days
+  base_date <- as.Date(base_date)
   nc_close(e_nc)
-  
-  # Set idexes for predefined date range
-  start <- as.numeric(first_date - base_date) + 1 # Does not start at 0
-  end <- as.numeric(final_date - base_date) + 1
-  
-  # Slicing stacks for the desired range
-  final_files = final_files[(start:end)]
-  final_files = final_files[!is.na(final_files)]
-  late_files = late_files[(start:end)]
-  late_files = late_files[!is.na(late_files)]
   
   # HANDLING DATE DIFFERENCES
   # Removes dates which have no pair in the 
   # other stack of files truncating the amount
   # of data to the size of the smallest stack.
+  
+  # Starting index and range to iterate
   i = 1
-  timestamps = seq(first_date, final_date, by='days')
+  timestamps = c()
   len = min(c(length(late_files), length(final_files)))
   
-  # Open range and return
-  late_stack <- raster::stack()
-  final_stack <- raster::stack()
-  
-  # Remove files without pairs
+  # Remove files without pairs (if leveling is set)
   while (i <= len) {
     late = nc_open(late_files[i])
     final = nc_open(final_files[i])
     l = ncvar_get(late, 'time')
     f = ncvar_get(final, 'time')
     
-    # If theres no time pair in the stacks, remove the stack layer
-    if ( l != f ) {
-      if ( l > f ) { final_files = final_files[-i] }
-      if ( l < f ) { late_files = late_files[-i] }
+    while (l != f) {
+      if (l < f) {
+        print("Final product missing date:")
+        print(base_date + l)
+        late_files = late_files[-i]
+        late = nc_open(late_files[i])
+        l = ncvar_get(late, 'time')
+      } else if (l > f) {
+        print("Late product missing date:")
+        print(base_date + f)
+        final_files = final_files[-i]
+        final = nc_open(final_files[i])
+        f = ncvar_get(final, 'time')
+      }
+      
       timestamps = timestamps[-i]
-      len = min(c(length(late_files), length(final_files)))
-      i = i - 1
-    } else {
-      late_stack = addLayer(late_stack, late_files[i])
-      final_stack = addLayer(final_stack, final_files[i]) 
+      len = min(length(late_files), length(final_files))
     }
+    
+    timestamps = append(timestamps, as.Date(base_date + l))  
+    if (tail(timestamps, 1) == first_date) {start = i}
+    if (tail(timestamps, 1) == final_date) {end = i}
     
     nc_close(late)
     nc_close(final)
     i = i + 1
   }
+  
+  # Slicing files for the desired range
+  final_files = final_files[(start:end)]
+  final_files = final_files[!is.na(final_files)]
+  late_files = late_files[(start:end)]
+  late_files = late_files[!is.na(late_files)]
+  timestamps = timestamps[(start:end)]
+  
+  # Initialize stacks
+  late_stack <- raster::stack(late_files)
+  final_stack <- raster::stack(final_files)
   
   # Bind timestamps to raster layers
   late_stack = setZ(late_stack, timestamps, name='time') 
@@ -134,6 +143,7 @@ get_decends <- function (dates) {
   
   return(list("legend"=unique(legend), "mask"=indices))
 }
+
 
 
 
@@ -225,5 +235,4 @@ diff = calc(stack(stacks$late, stacks$final), fun)
 diff = stackApply(diff, decend$mask, sum)
 N = length(stacks$late)
 diff = sqrt((diff**2)/N)
-
 
