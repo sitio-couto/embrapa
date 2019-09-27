@@ -1,0 +1,11 @@
+late_source|https://gpm1.gesdisc.eosdis.nasa.gov/opendap/GPM_L3/GPM_3IMERGDL
+final_source|https://gpm1.gesdisc.eosdis.nasa.gov/opendap/GPM_L3/GPM_3IMERGDF
+version|6 
+
+user|
+pass|
+
+lat|-35,10
+lon|-75,-30
+var|precipitationCal
+time|2014/06/01,2016/06/01
