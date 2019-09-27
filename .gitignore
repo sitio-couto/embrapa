@@ -2,5 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-Validation/data/final_run
-Validation/data/late_run
+Validation/data/final_run/*
+!Validation/data/final_run/.gitkeep
+Validation/data/late_run/*
+!Validation/data/late_run/.gitkeep
