@@ -88,7 +88,7 @@ for date in dates_list:
     for v in var:
         link += v+"[0:0]"+f'[{lon[0]}:{lon[1]}]'+f'[{lat[0]}:{lat[1]}],'
 
-    link += f'lon[{lon[0]}:{lon[1]}],lat[{lat[0]}:{lat[1]}]'
+    link += 'time,'+f'lon[{lon[0]}:{lon[1]}],lat[{lat[0]}:{lat[1]}]'
     late_links.append([link,file_name])
 
 # Generate final product links
@@ -110,7 +110,7 @@ for date in dates_list:
     for v in var:
         link += v+"[0:0]"+f'[{lon[0]}:{lon[1]}]'+f'[{lat[0]}:{lat[1]}]'
     
-    link += f'lon[{lon[0]}:{lon[1]}],lat[{lat[0]}:{lat[1]}]'
+    link += 'time,'+f'lon[{lon[0]}:{lon[1]}],lat[{lat[0]}:{lat[1]}]'
     final_links.append([link,file_name])
 
 
